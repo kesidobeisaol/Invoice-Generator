@@ -1,0 +1,276 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const formPage = document.getElementById('formPage');
+    const invoicePage = document.getElementById('invoicePage');
+    const invoiceOutput = document.getElementById('invoiceOutput');
+    const invoiceForm = document.getElementById('invoiceForm');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const tasksBody = document.getElementById('tasksBody');
+    const backToFormBtn = document.getElementById('backToFormBtn');
+    const printInvoiceBtn = document.getElementById('printInvoiceBtn');
+    const invoiceDate = document.getElementById('invoiceDate');
+
+    invoiceDate.value = new Date().toISOString().slice(0, 10);
+
+    function nextIndex() {
+        return tasksBody.querySelectorAll('.task-row').length;
+    }
+
+    function renumberRows() {
+        tasksBody.querySelectorAll('.task-row').forEach((row, index) => {
+            row.querySelectorAll('input, textarea').forEach((field) => {
+                field.name = field.name.replace(/tasks\[\d+\]/, `tasks[${index}]`);
+            });
+        });
+    }
+
+    function createTaskRow(index) {
+        const row = document.createElement('tr');
+        row.className = 'task-row';
+        row.innerHTML = `
+            <td><input type="text" name="tasks[${index}][date]" placeholder="Apr 18, 2026" required></td>
+            <td><input type="text" name="tasks[${index}][month]" placeholder="April" required></td>
+            <td><input type="number" name="tasks[${index}][day]" placeholder="18" required></td>
+            <td><textarea name="tasks[${index}][details]" rows="4" placeholder="Describe the task or activity performed..." required></textarea></td>
+            <td><input type="number" name="tasks[${index}][hours]" placeholder="0" min="0" step="0.25" required></td>
+            <td><button type="button" class="icon-btn remove-row" title="Remove row">×</button></td>
+        `;
+        return row;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function formatMoney(amount, currency) {
+        return `${escapeHtml(currency.toUpperCase())} ${Number(amount || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    }
+
+    function formatDate(dateValue) {
+        const date = new Date(dateValue + 'T00:00:00');
+        return date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit'
+        });
+    }
+
+    function clientCode(clientName) {
+        const clean = String(clientName || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+        return clean ? clean.slice(0, Math.min(5, Math.max(3, clean.length))) : 'CLIENT';
+    }
+
+    function invoiceNumber(dateValue, clientName) {
+        const date = new Date(dateValue + 'T00:00:00');
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `INV-${y}${m}${d}-${clientCode(clientName)}-001`;
+    }
+
+    function getValue(formData, key) {
+        return formData.get(key)?.toString().trim() || '';
+    }
+
+    function addressLine(city, country, postal) {
+        const location = [city, country].filter(Boolean).join(', ');
+        return `${location}${postal ? ' ' + postal : ''}`.trim();
+    }
+
+    function optionalLine(value) {
+        return value ? `<p>${escapeHtml(value)}</p>` : '';
+    }
+
+    function getTasks() {
+        const rows = tasksBody.querySelectorAll('.task-row');
+
+        return Array.from(rows).map((row) => ({
+            date: row.querySelector('[name$="[date]"]').value.trim(),
+            details: row.querySelector('[name$="[details]"]').value.trim(),
+            hours: Number(row.querySelector('[name$="[hours]"]').value || 0)
+        })).filter((task) => task.date || task.details || task.hours > 0);
+    }
+
+    addTaskBtn.addEventListener('click', () => {
+        tasksBody.appendChild(createTaskRow(nextIndex()));
+    });
+
+    tasksBody.addEventListener('click', (event) => {
+        if (!event.target.classList.contains('remove-row')) return;
+
+        const rows = tasksBody.querySelectorAll('.task-row');
+        if (rows.length === 1) {
+            alert('At least one task row is required.');
+            return;
+        }
+
+        event.target.closest('.task-row').remove();
+        renumberRows();
+    });
+
+    invoiceForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!invoiceForm.checkValidity()) {
+            invoiceForm.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(invoiceForm);
+
+        const freelancerName = getValue(formData, 'freelancer_name');
+        const freelancerAddress = getValue(formData, 'freelancer_address');
+        const freelancerCity = getValue(formData, 'freelancer_city');
+        const freelancerCountry = getValue(formData, 'freelancer_country');
+        const freelancerPostal = getValue(formData, 'freelancer_postal');
+        const freelancerEmail = getValue(formData, 'freelancer_email');
+        const freelancerPhone = getValue(formData, 'freelancer_phone');
+
+        const clientName = getValue(formData, 'client_name');
+        const clientAddress = getValue(formData, 'client_address');
+        const clientCity = getValue(formData, 'client_city');
+        const clientCountry = getValue(formData, 'client_country');
+        const clientPostal = getValue(formData, 'client_postal');
+        const clientContact = getValue(formData, 'client_contact');
+        const clientEmail = getValue(formData, 'client_email');
+
+        const invoiceDateValue = getValue(formData, 'invoice_date');
+        const hourlyRate = Number(getValue(formData, 'hourly_rate') || 0);
+        const currency = getValue(formData, 'currency') || 'PHP';
+        const tasks = getTasks();
+
+        let totalHours = 0;
+
+        const taskRows = tasks.map((task) => {
+            const amount = task.hours * hourlyRate;
+            totalHours += task.hours;
+
+            return `
+                <tr>
+                    <td class="date-cell">${escapeHtml(task.date)}</td>
+                    <td class="details-cell">${escapeHtml(task.details).replace(/\n/g, '<br>')}</td>
+                    <td class="num">${task.hours.toFixed(2)}</td>
+                    <td class="num">${formatMoney(hourlyRate, currency)}</td>
+                    <td class="num">${formatMoney(amount, currency)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const subtotal = totalHours * hourlyRate;
+        const invNumber = invoiceNumber(invoiceDateValue, clientName);
+        const freelancerLocation = addressLine(freelancerCity, freelancerCountry, freelancerPostal);
+        const clientLocation = addressLine(clientCity, clientCountry, clientPostal);
+
+        invoiceOutput.innerHTML = `
+            <header class="invoice-header">
+                <div class="invoice-brand-left">
+                    <div class="invoice-icon" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div>
+                        <h1>Invoice</h1>
+                    </div>
+                </div>
+                <div class="invoice-company">
+                    <h2>${escapeHtml(freelancerName)}</h2>
+                    ${optionalLine(freelancerAddress)}
+                    ${optionalLine(freelancerLocation)}
+                    ${optionalLine(freelancerEmail)}
+                    ${optionalLine(freelancerPhone)}
+                </div>
+            </header>
+
+            <section class="invoice-meta-grid">
+                <div>
+                    <p class="label">Bill To</p>
+                    <h3>${escapeHtml(clientName)}</h3>
+                    ${optionalLine(clientContact)}
+                    ${optionalLine(clientAddress)}
+                    ${optionalLine(clientLocation)}
+                    ${optionalLine(clientEmail)}
+                </div>
+                <div class="invoice-meta-card">
+                    <div>
+                        <span>Invoice Number</span>
+                        <strong>${escapeHtml(invNumber)}</strong>
+                    </div>
+                    <div>
+                        <span>Invoice Date</span>
+                        <strong>${escapeHtml(formatDate(invoiceDateValue))}</strong>
+                    </div>
+                    <div>
+                        <span>Currency</span>
+                        <strong>${escapeHtml(currency.toUpperCase())}</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="invoice-table-section">
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Activity Details</th>
+                            <th class="num">Estimated Hours</th>
+                            <th class="num">Hourly Rate</th>
+                            <th class="num">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${taskRows}
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="totals-section">
+                <div class="tax-note">
+                    <strong>Tax Note</strong>
+                    <p>This invoice reflects the gross professional fee before taxes. Taxes and withholding are not included and should be handled by the payer according to their requirements.</p>
+                </div>
+                <div class="totals-card">
+                    <div>
+                        <span>Total Hours</span>
+                        <strong>${totalHours.toFixed(2)}</strong>
+                    </div>
+                    <div>
+                        <span>Subtotal</span>
+                        <strong>${formatMoney(subtotal, currency)}</strong>
+                    </div>
+                    <div class="grand-total">
+                        <span>Total Amount Due</span>
+                        <strong>${formatMoney(subtotal, currency)}</strong>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="invoice-footer">
+                <p>Thank you for your business.</p>
+            </footer>
+        `;
+
+        formPage.hidden = true;
+        invoicePage.hidden = false;
+        document.body.className = 'invoice-bg';
+        window.scrollTo(0, 0);
+    });
+
+    backToFormBtn.addEventListener('click', () => {
+        invoicePage.hidden = true;
+        formPage.hidden = false;
+        document.body.className = 'app-bg';
+        window.scrollTo(0, 0);
+    });
+
+    printInvoiceBtn.addEventListener('click', () => {
+        window.print();
+    });
+});
