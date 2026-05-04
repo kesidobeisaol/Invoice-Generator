@@ -99,7 +99,12 @@ foreach ($tasks as $task) {
 }
 
 $subtotal = $totalHours * $hourlyRate;
-$totalDue = $subtotal;
+
+$withholdingRate = 0.05;
+$withholdingTax = $subtotal * $withholdingRate;
+$netAmount = $subtotal - $withholdingTax;
+
+$totalDue = $netAmount;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -192,7 +197,7 @@ $totalDue = $subtotal;
             <section class="totals-section">
                 <div class="tax-note">
                     <strong>Tax Note</strong>
-                    <p>This invoice reflects the gross professional fee before taxes. Taxes and withholding are not included and should be handled by the payer according to their requirements.</p>
+                    <p>This invoice shows the gross professional fee, 5% withholding tax, and net amount after withholding.</p>
                 </div>
                 <div class="totals-card">
                     <div>
@@ -200,12 +205,16 @@ $totalDue = $subtotal;
                         <strong><?= number_format((float)$totalHours, 2) ?></strong>
                     </div>
                     <div>
-                        <span>Subtotal</span>
+                        <span>Gross Amount</span>
                         <strong><?= money($subtotal, $currency) ?></strong>
                     </div>
+                    <div>
+                        <span>5% Withholding Tax</span>
+                        <strong>-<?= money($withholdingTax, $currency) ?></strong>
+                    </div>
                     <div class="grand-total">
-                        <span>Total Amount Due</span>
-                        <strong><?= money($totalDue, $currency) ?></strong>
+                        <span>Net Amount After Withholding</span>
+                        <strong><?= money($netAmount, $currency) ?></strong>
                     </div>
                 </div>
             </section>
