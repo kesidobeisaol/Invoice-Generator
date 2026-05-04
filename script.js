@@ -163,7 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
 
-        const subtotal = totalHours * hourlyRate;
+        const grossAmount = totalHours * hourlyRate;
+        const withholdingTax = grossAmount * 0.05;
+        const netAmount = grossAmount - withholdingTax;
+
         const invNumber = invoiceNumber(invoiceDateValue, clientName);
         const freelancerLocation = addressLine(freelancerCity, freelancerCountry, freelancerPostal);
         const clientLocation = addressLine(clientCity, clientCountry, clientPostal);
@@ -231,23 +234,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 </table>
             </section>
 
-            <section class="totals-section">
-                <div class="tax-note">
-                    <strong>Tax Note</strong>
-                    <p>This invoice reflects the gross professional fee before taxes. Taxes and withholding are not included and should be handled by the payer according to their requirements.</p>
-                </div>
+            <section class="totals-section no-note">
+                <div></div>
                 <div class="totals-card">
                     <div>
                         <span>Total Hours</span>
                         <strong>${totalHours.toFixed(2)}</strong>
                     </div>
                     <div>
-                        <span>Subtotal</span>
-                        <strong>${formatMoney(subtotal, currency)}</strong>
+                        <span>Gross Amount</span>
+                        <strong>${formatMoney(grossAmount, currency)}</strong>
+                    </div>
+                    <div>
+                        <span>5% Withholding Tax</span>
+                        <strong>-${formatMoney(withholdingTax, currency)}</strong>
                     </div>
                     <div class="grand-total">
-                        <span>Total Amount Due</span>
-                        <strong>${formatMoney(subtotal, currency)}</strong>
+                        <span>Net Amount After Withholding</span>
+                        <strong>${formatMoney(netAmount, currency)}</strong>
                     </div>
                 </div>
             </section>
