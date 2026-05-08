@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToFormBtn = document.getElementById('backToFormBtn');
     const printInvoiceBtn = document.getElementById('printInvoiceBtn');
     const invoiceDate = document.getElementById('invoiceDate');
+    const paymentQrFile = document.getElementById('paymentQrFile');
+
+    let paymentQrDataUrl = '';
 
     invoiceDate.value = new Date().toISOString().slice(0, 10);
 
@@ -88,6 +91,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return value ? `<p>${escapeHtml(value)}</p>` : '';
     }
 
+    function paymentDetailRow(label, value) {
+        return value ? `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>` : '';
+    }
+
+    function renderPaymentSection(paymentInfo) {
+        const { bankName, accountName, accountNumber, paymentReference, qrImage } = paymentInfo;
+        const hasDetails = bankName || accountName || accountNumber || paymentReference;
+        const hasQr = Boolean(qrImage);
+
+        if (!hasDetails && !hasQr) return '';
+
+        return `
+            <section class="payment-section">
+                <div class="payment-section-header">
+                    <h3>Payment Details</h3>
+                    <p>Please use the bank details or scan the QR code below.</p>
+                </div>
+                <div class="payment-section-grid ${hasQr ? '' : 'single-column'}">
+                    <div class="payment-details-card">
+                        ${paymentDetailRow('Bank Name', bankName)}
+                        ${paymentDetailRow('Account Name', accountName)}
+                        ${paymentDetailRow('Account Number', accountNumber)}
+                        ${paymentDetailRow('Reference', paymentReference)}
+                    </div>
+                    ${hasQr ? `<div class="payment-qr-card"><img src="${escapeHtml(qrImage)}" alt="Payment QR code" class="payment-qr-image"></div>` : ''}
+                </div>
+            </section>
+        `;
+    }
+
     function getTasks() {
         const rows = tasksBody.querySelectorAll('.task-row');
 
@@ -97,6 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: Number(row.querySelector('[name$="[hours]"]').value || 0)
         })).filter((task) => task.date || task.details || task.hours > 0);
     }
+
+    paymentQrFile.addEventListener('change', (event) => {
+        const [file] = event.target.files || [];
+        if (!file) {
+            paymentQrDataUrl = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            paymentQrDataUrl = typeof reader.result === 'string' ? reader.result : '';
+        };
+        reader.readAsDataURL(file);
+    });
 
     addTaskBtn.addEventListener('click', () => {
         tasksBody.appendChild(createTaskRow(nextIndex()));
@@ -144,6 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const invoiceDateValue = getValue(formData, 'invoice_date');
         const hourlyRate = Number(getValue(formData, 'hourly_rate') || 0);
         const currency = getValue(formData, 'currency') || 'PHP';
+        const bankName = getValue(formData, 'bank_name');
+        const accountName = getValue(formData, 'account_name');
+        const accountNumber = getValue(formData, 'account_number');
+        const paymentReference = getValue(formData, 'payment_reference');
         const tasks = getTasks();
 
         let totalHours = 0;
@@ -257,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </section>
 
             <footer class="invoice-footer">
+                ${renderPaymentSection({ bankName, accountName, accountNumber, paymentReference, qrImage: paymentQrDataUrl })}
                 <p>Thank you for your business.</p>
             </footer>
         `;

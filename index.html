@@ -98,6 +98,33 @@
                     </label>
                 </div>
 
+                <h2>Payment Information</h2>
+
+                <div class="payment-card-form">
+                    <div class="grid two">
+                        <label>Bank Name
+                            <input type="text" name="bank_name" placeholder="e.g., BDO, BPI, Maya Bank">
+                        </label>
+
+                        <label>Account Name
+                            <input type="text" name="account_name" placeholder="Name of account holder">
+                        </label>
+
+                        <label>Account Number
+                            <input type="text" name="account_number" placeholder="e.g., 012345678901">
+                        </label>
+
+                        <label>Payment Reference <span class="optional">optional</span>
+                            <input type="text" name="payment_reference" placeholder="e.g., Invoice number or project code">
+                        </label>
+                    </div>
+
+                    <label class="qr-upload-label">QR Code Image <span class="optional">optional</span>
+                        <input type="file" name="payment_qr_file" id="paymentQrFile" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                    </label>
+                    <p class="muted help-text">Upload a bank QR image (PNG, JPG, WEBP, or SVG). This will appear in the payment section of the invoice.</p>
+                </div>
+
                 <div class="section-title-row">
                     <h2>Task / Timesheet Details</h2>
                     <button type="button" class="btn secondary" id="addTaskBtn">+ Add Task Row</button>
