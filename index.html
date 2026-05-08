@@ -13,11 +13,11 @@
                 <div>
                     <p class="eyebrow">Professional Invoice</p>
                     <h1>Invoice Generator</h1>
-                    <p class="muted">Create a professional invoice with withholding tax and net amount computation.</p>
+                    <p class="muted">Create a professional invoice with withholding tax, payment details, and QR code support.</p>
                 </div>
             </div>
 
-            <form id="invoiceForm">
+            <form id="invoiceForm" action="invoice.php" method="POST" enctype="multipart/form-data">
                 <h2>Freelancer / Business Information</h2>
 
                 <div class="grid two">
@@ -46,7 +46,7 @@
                     </label>
 
                     <label>Country
-                        <input type="text" name="freelancer_country" required placeholder="Country">
+                        <input type="text" name="freelancer_country" required placeholder="Country" value="Philippines">
                     </label>
                 </div>
 
@@ -98,12 +98,37 @@
                     </label>
                 </div>
 
-                <h2>Payment Information</h2>
+                <h2>Payment / Bank Information</h2>
+
+                <div class="grid two">
+                    <label>Bank / Wallet Name
+                        <input type="text" name="payment_bank_name" placeholder="e.g., BDO Unibank, Maya, GCash">
+                    </label>
+
+                    <label>Account Name
+                        <input type="text" name="payment_account_name" placeholder="e.g., John Carlo Bartolata">
+                    </label>
+
+                    <label>Account Number
+                        <input type="text" name="payment_account_number" placeholder="e.g., 001281532531">
+                    </label>
+
+                    <label>Upload QR Code Image <span class="optional">PNG, JPG, JPEG, WEBP</span>
+                        <input type="file" name="payment_qr_file" id="paymentQrFile" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif">
+                    </label>
+                </div>
 
                 <div class="grid one">
-                    <label>Bank QR Code / Payment Details <span class="optional">optional</span>
-                        <textarea name="payment_qr" id="paymentQr" rows="4" placeholder="Paste bank QR code text, payment link, or image URL/data URL"></textarea>
+                    <label>Additional Payment Notes <span class="optional">optional</span>
+                        <textarea name="payment_notes" rows="3" placeholder="Example: BDO to BDO transfers are free. Fees may apply for non-BDO transfers."></textarea>
                     </label>
+                </div>
+
+                <input type="hidden" name="payment_qr_data" id="paymentQrData">
+
+                <div class="qr-preview-wrap" id="qrPreviewWrap" hidden>
+                    <p class="label">QR Preview</p>
+                    <img id="qrPreviewImage" class="payment-qr-image" alt="QR Preview">
                 </div>
 
                 <div class="section-title-row">
@@ -139,6 +164,7 @@
 
                 <div class="actions">
                     <button type="submit" class="btn primary">Preview Invoice</button>
+                    <button type="button" class="btn secondary" id="generateServerBtn">Generate PHP Invoice</button>
                 </div>
             </form>
         </section>
