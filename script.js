@@ -110,18 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }) {
         const hasDetails = bankName || accountName || accountNumber || paymentNotes || qrDataUrl;
 
-        if (!hasDetails) {
-            return '';
-        }
-
         return `
             <div class="payment-box">
-                <p class="label">Payment Details</p>
+                <p class="label">Payment / Notes</p>
 
                 ${bankName ? `<p><strong>Bank / Wallet:</strong> ${escapeHtml(bankName)}</p>` : ''}
                 ${accountName ? `<p><strong>Account Name:</strong> ${escapeHtml(accountName)}</p>` : ''}
                 ${accountNumber ? `<p><strong>Account Number:</strong> ${escapeHtml(accountNumber)}</p>` : ''}
                 ${paymentNotes ? `<p class="payment-note-text">${escapeHtml(paymentNotes).replace(/\n/g, '<br>')}</p>` : ''}
+                ${!hasDetails ? `<p class="payment-note-text">Payment details to be provided separately.</p>` : ''}
 
                 ${qrDataUrl ? `
                     <div class="payment-qr-box">
@@ -377,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })}
 
                 <div class="totals-card">
+                    <p class="label summary-label">Summary</p>
                     <div>
                         <span>Total Hours</span>
                         <strong>${totalHours.toFixed(2)}</strong>
