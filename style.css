@@ -107,49 +107,6 @@ h3 {
     grid-template-columns: minmax(0, 1fr);
 }
 
-.payment-card-form {
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 16px;
-    background: #fbfdff;
-}
-
-.qr-upload-label {
-    margin-top: 12px;
-}
-
-.help-text {
-    margin: 6px 0 0;
-    font-size: 13px;
-}
-
-.qr-upload-group {
-    margin-top: 12px;
-}
-
-.upload-title {
-    margin: 0 0 8px;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text);
-}
-
-.upload-btn {
-    display: inline-flex;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
 label {
     display: grid;
     gap: 7px;
@@ -284,81 +241,25 @@ textarea:focus {
     margin-bottom: 16px;
 }
 
-.payment-section {
-    margin: 12px 0 18px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--soft);
-    padding: 18px;
-}
-
-.payment-section-header h3 {
-    margin: 0;
-    font-size: 20px;
-    color: var(--blue-dark);
-}
-
-.payment-section-header p {
-    margin: 4px 0 0;
-    color: var(--muted);
-    font-size: 14px;
-}
-
-.payment-section-grid {
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 18px;
-    align-items: start;
-}
-
-.payment-section-grid.single-column {
-    grid-template-columns: 1fr;
-}
-
-.payment-details-card,
-.payment-qr-card {
-    border-radius: 12px;
-    background: #fff;
-    border: 1px solid #dbe7f5;
-    padding: 14px;
-}
-
-.payment-details-card > div {
-    display: grid;
-    gap: 3px;
-    padding: 8px 0;
-    border-bottom: 1px dashed #d7deeb;
-}
-
-.payment-details-card > div:last-child {
-    border-bottom: 0;
-}
-
-.payment-details-card span {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.payment-details-card strong {
-    font-size: 16px;
-    letter-spacing: 0.01em;
-}
-
-.payment-qr-card {
-    display: flex;
-    justify-content: center;
+.payment-qr-box {
+    margin-bottom: 12px;
 }
 
 .payment-qr-image {
-    max-width: 230px;
+    max-width: 220px;
     width: 100%;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 10px;
     background: #fff;
     padding: 8px;
+}
+
+.payment-qr-text {
+    margin: 6px 0 0;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    word-break: break-word;
 }
 
 .invoice-sheet {

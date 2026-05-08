@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const printInvoiceBtn = document.getElementById('printInvoiceBtn');
     const invoiceDate = document.getElementById('invoiceDate');
     const paymentQrFile = document.getElementById('paymentQrFile');
-    const paymentQrFileName = document.getElementById('paymentQrFileName');
 
     let paymentQrDataUrl = '';
 
@@ -92,33 +91,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return value ? `<p>${escapeHtml(value)}</p>` : '';
     }
 
-    function paymentDetailRow(label, value) {
-        return value ? `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>` : '';
-    }
+    function renderPaymentQr(value) {
+        if (!value) return '';
 
-    function renderPaymentSection(paymentInfo) {
-        const { bankName, accountName, accountNumber, paymentReference, qrImage } = paymentInfo;
-        const hasDetails = bankName || accountName || accountNumber || paymentReference;
-        const hasQr = Boolean(qrImage);
+        const trimmed = value.trim();
+        const isImageUrl = /^(https?:\/\/|data:image\/)/i.test(trimmed);
 
-        if (!hasDetails && !hasQr) return '';
+        if (isImageUrl) {
+            return `
+                <div class="payment-qr-box">
+                    <p class="label">Payment QR</p>
+                    <img src="${escapeHtml(trimmed)}" alt="Payment QR code" class="payment-qr-image">
+                </div>
+            `;
+        }
 
         return `
-            <section class="payment-section">
-                <div class="payment-section-header">
-                    <h3>Payment Details</h3>
-                    <p>Please use the bank details or scan the QR code below.</p>
-                </div>
-                <div class="payment-section-grid ${hasQr ? '' : 'single-column'}">
-                    <div class="payment-details-card">
-                        ${paymentDetailRow('Bank Name', bankName)}
-                        ${paymentDetailRow('Account Name', accountName)}
-                        ${paymentDetailRow('Account Number', accountNumber)}
-                        ${paymentDetailRow('Reference', paymentReference)}
-                    </div>
-                    ${hasQr ? `<div class="payment-qr-card"><img src="${escapeHtml(qrImage)}" alt="Payment QR code" class="payment-qr-image"></div>` : ''}
-                </div>
-            </section>
+            <div class="payment-qr-box">
+                <p class="label">Payment QR / Bank Details</p>
+                <p class="payment-qr-text">${escapeHtml(trimmed).replace(/\n/g, '<br>')}</p>
+            </div>
         `;
     }
 
@@ -136,11 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const [file] = event.target.files || [];
         if (!file) {
             paymentQrDataUrl = '';
-            paymentQrFileName.textContent = 'No file selected.';
             return;
         }
-
-        paymentQrFileName.textContent = file.name;
 
         const reader = new FileReader();
         reader.onload = () => {
@@ -195,10 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const invoiceDateValue = getValue(formData, 'invoice_date');
         const hourlyRate = Number(getValue(formData, 'hourly_rate') || 0);
         const currency = getValue(formData, 'currency') || 'PHP';
-        const bankName = getValue(formData, 'bank_name');
-        const accountName = getValue(formData, 'account_name');
-        const accountNumber = getValue(formData, 'account_number');
-        const paymentReference = getValue(formData, 'payment_reference');
+        const paymentQr = getValue(formData, 'payment_qr');
         const tasks = getTasks();
 
         let totalHours = 0;
@@ -312,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </section>
 
             <footer class="invoice-footer">
-                ${renderPaymentSection({ bankName, accountName, accountNumber, paymentReference, qrImage: paymentQrDataUrl })}
+                ${renderPaymentQr(paymentQr)}
                 <p>Thank you for your business.</p>
             </footer>
         `;
