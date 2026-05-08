@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToFormBtn = document.getElementById('backToFormBtn');
     const printInvoiceBtn = document.getElementById('printInvoiceBtn');
     const invoiceDate = document.getElementById('invoiceDate');
+    const paymentQrFile = document.getElementById('paymentQrFile');
+
+    let paymentQrDataUrl = '';
 
     invoiceDate.value = new Date().toISOString().slice(0, 10);
 
@@ -120,6 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: Number(row.querySelector('[name$="[hours]"]').value || 0)
         })).filter((task) => task.date || task.details || task.hours > 0);
     }
+
+    paymentQrFile.addEventListener('change', (event) => {
+        const [file] = event.target.files || [];
+        if (!file) {
+            paymentQrDataUrl = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            paymentQrDataUrl = typeof reader.result === 'string' ? reader.result : '';
+        };
+        reader.readAsDataURL(file);
+    });
 
     addTaskBtn.addEventListener('click', () => {
         tasksBody.appendChild(createTaskRow(nextIndex()));
