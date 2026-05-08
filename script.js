@@ -8,11 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToFormBtn = document.getElementById('backToFormBtn');
     const printInvoiceBtn = document.getElementById('printInvoiceBtn');
     const invoiceDate = document.getElementById('invoiceDate');
+
     const paymentQrFile = document.getElementById('paymentQrFile');
+    const paymentQrData = document.getElementById('paymentQrData');
+    const qrPreviewWrap = document.getElementById('qrPreviewWrap');
+    const qrPreviewImage = document.getElementById('qrPreviewImage');
+    const generateServerBtn = document.getElementById('generateServerBtn');
 
     let paymentQrDataUrl = '';
 
-    invoiceDate.value = new Date().toISOString().slice(0, 10);
+    if (invoiceDate) {
+        invoiceDate.value = new Date().toISOString().slice(0, 10);
+    }
 
     function nextIndex() {
         return tasksBody.querySelectorAll('.task-row').length;
@@ -37,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><input type="number" name="tasks[${index}][hours]" placeholder="0" min="0" step="0.25" required></td>
             <td><button type="button" class="icon-btn remove-row" title="Remove row">×</button></td>
         `;
+
         return row;
     }
 
@@ -50,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatMoney(amount, currency) {
-        return `${escapeHtml(currency.toUpperCase())} ${Number(amount || 0).toLocaleString(undefined, {
+        return `${escapeHtml(String(currency || 'PHP').toUpperCase())} ${Number(amount || 0).toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         })}`;
@@ -58,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDate(dateValue) {
         const date = new Date(dateValue + 'T00:00:00');
+
         return date.toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'long',
@@ -75,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const d = String(date.getDate()).padStart(2, '0');
+
         return `INV-${y}${m}${d}-${clientCode(clientName)}-001`;
     }
 
@@ -91,25 +101,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return value ? `<p>${escapeHtml(value)}</p>` : '';
     }
 
-    function renderPaymentQr(value) {
-        if (!value) return '';
+    function renderPaymentDetails({
+        bankName,
+        accountName,
+        accountNumber,
+        paymentNotes,
+        qrDataUrl
+    }) {
+        const hasDetails = bankName || accountName || accountNumber || paymentNotes || qrDataUrl;
 
-        const trimmed = value.trim();
-        const isImageUrl = /^(https?:\/\/|data:image\/)/i.test(trimmed);
-
-        if (isImageUrl) {
-            return `
-                <div class="payment-qr-box">
-                    <p class="label">Payment QR</p>
-                    <img src="${escapeHtml(trimmed)}" alt="Payment QR code" class="payment-qr-image">
-                </div>
-            `;
+        if (!hasDetails) {
+            return '';
         }
 
         return `
-            <div class="payment-qr-box">
-                <p class="label">Payment QR / Bank Details</p>
-                <p class="payment-qr-text">${escapeHtml(trimmed).replace(/\n/g, '<br>')}</p>
+            <div class="payment-box">
+                <p class="label">Payment Details</p>
+
+                ${bankName ? `<p><strong>Bank / Wallet:</strong> ${escapeHtml(bankName)}</p>` : ''}
+                ${accountName ? `<p><strong>Account Name:</strong> ${escapeHtml(accountName)}</p>` : ''}
+                ${accountNumber ? `<p><strong>Account Number:</strong> ${escapeHtml(accountNumber)}</p>` : ''}
+                ${paymentNotes ? `<p class="payment-note-text">${escapeHtml(paymentNotes).replace(/\n/g, '<br>')}</p>` : ''}
+
+                ${qrDataUrl ? `
+                    <div class="payment-qr-box">
+                        <img src="${escapeHtml(qrDataUrl)}" alt="Payment QR Code" class="payment-qr-image">
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -124,28 +142,95 @@ document.addEventListener('DOMContentLoaded', () => {
         })).filter((task) => task.date || task.details || task.hours > 0);
     }
 
-    paymentQrFile.addEventListener('change', (event) => {
-        const [file] = event.target.files || [];
-        if (!file) {
-            paymentQrDataUrl = '';
-            return;
-        }
+    if (paymentQrFile) {
+        paymentQrFile.addEventListener('change', (event) => {
+            const [file] = event.target.files || [];
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            paymentQrDataUrl = typeof reader.result === 'string' ? reader.result : '';
-        };
-        reader.readAsDataURL(file);
-    });
+            if (!file) {
+                paymentQrDataUrl = '';
+
+                if (paymentQrData) {
+                    paymentQrData.value = '';
+                }
+
+                if (qrPreviewWrap) {
+                    qrPreviewWrap.hidden = true;
+                }
+
+                if (qrPreviewImage) {
+                    qrPreviewImage.removeAttribute('src');
+                }
+
+                return;
+            }
+
+            const allowedTypes = [
+                'image/png',
+                'image/jpeg',
+                'image/jpg',
+                'image/webp',
+                'image/gif'
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please upload a valid image file: PNG, JPG, JPEG, WEBP, or GIF.');
+                paymentQrFile.value = '';
+                paymentQrDataUrl = '';
+
+                if (paymentQrData) {
+                    paymentQrData.value = '';
+                }
+
+                return;
+            }
+
+            const maxSize = 3 * 1024 * 1024;
+
+            if (file.size > maxSize) {
+                alert('The QR code image is too large. Please upload an image below 3MB.');
+                paymentQrFile.value = '';
+                paymentQrDataUrl = '';
+
+                if (paymentQrData) {
+                    paymentQrData.value = '';
+                }
+
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                paymentQrDataUrl = typeof reader.result === 'string' ? reader.result : '';
+
+                if (paymentQrData) {
+                    paymentQrData.value = paymentQrDataUrl;
+                }
+
+                if (qrPreviewImage) {
+                    qrPreviewImage.src = paymentQrDataUrl;
+                }
+
+                if (qrPreviewWrap) {
+                    qrPreviewWrap.hidden = false;
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
 
     addTaskBtn.addEventListener('click', () => {
         tasksBody.appendChild(createTaskRow(nextIndex()));
     });
 
     tasksBody.addEventListener('click', (event) => {
-        if (!event.target.classList.contains('remove-row')) return;
+        if (!event.target.classList.contains('remove-row')) {
+            return;
+        }
 
         const rows = tasksBody.querySelectorAll('.task-row');
+
         if (rows.length === 1) {
             alert('At least one task row is required.');
             return;
@@ -184,7 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const invoiceDateValue = getValue(formData, 'invoice_date');
         const hourlyRate = Number(getValue(formData, 'hourly_rate') || 0);
         const currency = getValue(formData, 'currency') || 'PHP';
-        const paymentQr = getValue(formData, 'payment_qr');
+
+        const paymentBankName = getValue(formData, 'payment_bank_name');
+        const paymentAccountName = getValue(formData, 'payment_account_name');
+        const paymentAccountNumber = getValue(formData, 'payment_account_number');
+        const paymentNotes = getValue(formData, 'payment_notes');
+
         const tasks = getTasks();
 
         let totalHours = 0;
@@ -224,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h1>Invoice</h1>
                     </div>
                 </div>
+
                 <div class="invoice-company">
                     <h2>${escapeHtml(freelancerName)}</h2>
                     ${optionalLine(freelancerAddress)}
@@ -242,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${optionalLine(clientLocation)}
                     ${optionalLine(clientEmail)}
                 </div>
+
                 <div class="invoice-meta-card">
                     <div>
                         <span>Invoice Number</span>
@@ -275,8 +367,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 </table>
             </section>
 
-            <section class="totals-section no-note">
-                <div></div>
+            <section class="totals-section">
+                ${renderPaymentDetails({
+                    bankName: paymentBankName,
+                    accountName: paymentAccountName,
+                    accountNumber: paymentAccountNumber,
+                    paymentNotes: paymentNotes,
+                    qrDataUrl: paymentQrDataUrl
+                })}
+
                 <div class="totals-card">
                     <div>
                         <span>Total Hours</span>
@@ -298,7 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </section>
 
             <footer class="invoice-footer">
-                ${renderPaymentQr(paymentQr)}
                 <p>Thank you for your business.</p>
             </footer>
         `;
@@ -308,6 +406,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.className = 'invoice-bg';
         window.scrollTo(0, 0);
     });
+
+    if (generateServerBtn) {
+        generateServerBtn.addEventListener('click', () => {
+            if (!invoiceForm.checkValidity()) {
+                invoiceForm.reportValidity();
+                return;
+            }
+
+            invoiceForm.submit();
+        });
+    }
 
     backToFormBtn.addEventListener('click', () => {
         invoicePage.hidden = true;
