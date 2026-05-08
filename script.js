@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentQrData = document.getElementById('paymentQrData');
     const qrPreviewWrap = document.getElementById('qrPreviewWrap');
     const qrPreviewImage = document.getElementById('qrPreviewImage');
-    const generateServerBtn = document.getElementById('generateServerBtn');
 
     let paymentQrDataUrl = '';
 
@@ -404,17 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.className = 'invoice-bg';
         window.scrollTo(0, 0);
     });
-
-    if (generateServerBtn) {
-        generateServerBtn.addEventListener('click', () => {
-            if (!invoiceForm.checkValidity()) {
-                invoiceForm.reportValidity();
-                return;
-            }
-
-            invoiceForm.submit();
-        });
-    }
 
     backToFormBtn.addEventListener('click', () => {
         invoicePage.hidden = true;
