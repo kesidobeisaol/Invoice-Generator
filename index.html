@@ -26,7 +26,7 @@
                     </label>
 
                     <label>Email Address <span class="optional">optional</span>
-                        <input type="email" name="freelancer_email" placeholder="your@email.com">
+                        <input type="email" name="freelancer_email" placeholder="name@example.com">
                     </label>
 
                     <label>Business Address <span class="optional">optional</span>
@@ -34,7 +34,7 @@
                     </label>
 
                     <label>Phone Number <span class="optional">optional</span>
-                        <input type="text" name="freelancer_phone" placeholder="+63...">
+                        <input type="text" name="freelancer_phone" placeholder="Phone number">
                     </label>
 
                     <label>City <span class="optional">optional</span>
@@ -46,7 +46,7 @@
                     </label>
 
                     <label>Country
-                        <input type="text" name="freelancer_country" required placeholder="Country" value="Philippines">
+                        <input type="text" name="freelancer_country" required placeholder="Country">
                     </label>
                 </div>
 
@@ -66,7 +66,7 @@
                     </label>
 
                     <label>Email Address <span class="optional">optional</span>
-                        <input type="email" name="client_email" placeholder="client@email.com">
+                        <input type="email" name="client_email" placeholder="client@example.com">
                     </label>
 
                     <label>City <span class="optional">optional</span>
@@ -102,15 +102,15 @@
 
                 <div class="grid two">
                     <label>Bank / Wallet Name <span class="optional">optional</span>
-                        <input type="text" name="payment_bank_name" placeholder="e.g., BDO Unibank, Maya, GCash">
+                        <input type="text" name="payment_bank_name" placeholder="Bank or wallet name">
                     </label>
 
                     <label>Account Name <span class="optional">optional</span>
-                        <input type="text" name="payment_account_name" placeholder="e.g., John Carlo Bartolata">
+                        <input type="text" name="payment_account_name" placeholder="Account holder name">
                     </label>
 
                     <label>Account Number <span class="optional">optional</span>
-                        <input type="text" name="payment_account_number" placeholder="e.g., 001281532531">
+                        <input type="text" name="payment_account_number" placeholder="Account or wallet number">
                     </label>
 
                     <label>Upload QR Code Image <span class="optional">PNG, JPG, JPEG, WEBP, GIF</span>
@@ -120,7 +120,7 @@
 
                 <div class="grid one">
                     <label>Additional Payment Notes <span class="optional">optional</span>
-                        <textarea name="payment_notes" rows="3" placeholder="Example: BDO to BDO transfers are free. Fees may apply for non-BDO transfers."></textarea>
+                        <textarea name="payment_notes" rows="3" placeholder="Add payment instructions, transfer notes, or other invoice notes."></textarea>
                     </label>
                 </div>
 
@@ -151,9 +151,9 @@
 
                         <tbody id="tasksBody">
                             <tr class="task-row">
-                                <td><input type="text" name="tasks[0][date]" placeholder="e.g., Apr 13, 2026" required></td>
+                                <td><input type="text" name="tasks[0][date]" placeholder="e.g., Month Day, Year" required></td>
                                 <td><input type="text" name="tasks[0][month]" placeholder="e.g., April" required></td>
-                                <td><input type="number" name="tasks[0][day]" placeholder="13" required></td>
+                                <td><input type="number" name="tasks[0][day]" placeholder="Day" required></td>
                                 <td><textarea name="tasks[0][details]" rows="4" placeholder="Describe the task or activity performed..." required></textarea></td>
                                 <td><input type="number" name="tasks[0][hours]" placeholder="0" min="0" step="0.25" required></td>
                                 <td><button type="button" class="icon-btn remove-row" title="Remove row">×</button></td>
