@@ -13,7 +13,7 @@
                 <div>
                     <p class="eyebrow">Professional Invoice</p>
                     <h1>Invoice Generator</h1>
-                    <p class="muted">Create a professional invoice with withholding tax, payment details, and QR code support.</p>
+                    <p class="muted">Create a clean A4-ready invoice with payment details and QR code support.</p>
                 </div>
             </div>
 
@@ -101,19 +101,19 @@
                 <h2>Payment / Bank Information</h2>
 
                 <div class="grid two">
-                    <label>Bank / Wallet Name
-                        <input type="text" name="payment_bank_name" placeholder="">
+                    <label>Bank / Wallet Name <span class="optional">optional</span>
+                        <input type="text" name="payment_bank_name" placeholder="e.g., BDO Unibank, Maya, GCash">
                     </label>
 
-                    <label>Account Name
-                        <input type="text" name="payment_account_name" placeholder="">
+                    <label>Account Name <span class="optional">optional</span>
+                        <input type="text" name="payment_account_name" placeholder="e.g., John Carlo Bartolata">
                     </label>
 
-                    <label>Account Number
-                        <input type="text" name="payment_account_number" placeholder="">
+                    <label>Account Number <span class="optional">optional</span>
+                        <input type="text" name="payment_account_number" placeholder="e.g., 001281532531">
                     </label>
 
-                    <label>Upload QR Code Image <span class="optional">PNG, JPG, JPEG, WEBP</span>
+                    <label>Upload QR Code Image <span class="optional">PNG, JPG, JPEG, WEBP, GIF</span>
                         <input type="file" name="payment_qr_file" id="paymentQrFile" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif">
                     </label>
                 </div>
