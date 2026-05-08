@@ -21,9 +21,11 @@ function address_line($city, $country, $postal) {
 function client_code($clientName) {
     $clean = preg_replace('/[^A-Za-z0-9]/', '', (string)$clientName);
     $clean = strtoupper($clean);
+
     if ($clean === '') {
         return 'CLIENT';
     }
+
     return substr($clean, 0, min(5, max(3, strlen($clean))));
 }
 
@@ -33,6 +35,7 @@ function invoice_sequence($dateKey, $clientCode) {
     }
 
     $key = $dateKey . '-' . $clientCode;
+
     if (!isset($_SESSION['invoice_sequences'][$key])) {
         $_SESSION['invoice_sequences'][$key] = 1;
     }
@@ -40,8 +43,52 @@ function invoice_sequence($dateKey, $clientCode) {
     return str_pad((string)$_SESSION['invoice_sequences'][$key], 3, '0', STR_PAD_LEFT);
 }
 
+function uploaded_qr_data_url() {
+    if (
+        !isset($_FILES['payment_qr_file']) ||
+        !is_array($_FILES['payment_qr_file']) ||
+        ($_FILES['payment_qr_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE
+    ) {
+        return '';
+    }
+
+    if ($_FILES['payment_qr_file']['error'] !== UPLOAD_ERR_OK) {
+        return '';
+    }
+
+    $maxSize = 3 * 1024 * 1024;
+
+    if ($_FILES['payment_qr_file']['size'] > $maxSize) {
+        return '';
+    }
+
+    $tmpPath = $_FILES['payment_qr_file']['tmp_name'];
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($tmpPath);
+
+    $allowed = [
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'image/gif',
+    ];
+
+    if (!in_array($mime, $allowed, true)) {
+        return '';
+    }
+
+    $content = file_get_contents($tmpPath);
+
+    if ($content === false) {
+        return '';
+    }
+
+    return 'data:' . $mime . ';base64,' . base64_encode($content);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: index.html');
     exit;
 }
 
@@ -69,6 +116,21 @@ $dateKey = date('Ymd', $invoiceTimestamp);
 $hourlyRate = (float)($_POST['hourly_rate'] ?? 0);
 $currency = $_POST['currency'] ?? 'PHP';
 $tasks = $_POST['tasks'] ?? [];
+
+$paymentBankName = trim($_POST['payment_bank_name'] ?? '');
+$paymentAccountName = trim($_POST['payment_account_name'] ?? '');
+$paymentAccountNumber = trim($_POST['payment_account_number'] ?? '');
+$paymentNotes = trim($_POST['payment_notes'] ?? '');
+
+$paymentQrData = uploaded_qr_data_url();
+
+if ($paymentQrData === '') {
+    $hiddenQrData = trim($_POST['payment_qr_data'] ?? '');
+
+    if (preg_match('/^data:image\/(png|jpeg|jpg|webp|gif);base64,/i', $hiddenQrData)) {
+        $paymentQrData = $hiddenQrData;
+    }
+}
 
 $clientCode = client_code($clientName);
 $seq = invoice_sequence($dateKey, $clientCode);
@@ -99,12 +161,9 @@ foreach ($tasks as $task) {
 }
 
 $subtotal = $totalHours * $hourlyRate;
-
 $withholdingRate = 0.05;
 $withholdingTax = $subtotal * $withholdingRate;
 $netAmount = $subtotal - $withholdingTax;
-
-$totalDue = $netAmount;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -117,7 +176,7 @@ $totalDue = $netAmount;
 <body class="invoice-bg">
     <main class="invoice-page">
         <div class="invoice-actions no-print">
-            <a href="index.php" class="btn secondary">Back to Form</a>
+            <a href="index.html" class="btn secondary">Back to Form</a>
             <button onclick="window.print()" class="btn primary">Print / Save as PDF</button>
         </div>
 
@@ -133,11 +192,14 @@ $totalDue = $netAmount;
                         <h1>Invoice</h1>
                     </div>
                 </div>
+
                 <div class="invoice-company">
                     <h2><?= h($freelancerName) ?></h2>
                     <?php if (trim($freelancerAddress) !== ''): ?><p><?= h($freelancerAddress) ?></p><?php endif; ?>
+
                     <?php $freelancerLocation = address_line($freelancerCity, $freelancerCountry, $freelancerPostal); ?>
                     <?php if ($freelancerLocation !== ''): ?><p><?= h($freelancerLocation) ?></p><?php endif; ?>
+
                     <?php if ($freelancerEmail !== ''): ?><p><?= h($freelancerEmail) ?></p><?php endif; ?>
                     <?php if ($freelancerPhone !== ''): ?><p><?= h($freelancerPhone) ?></p><?php endif; ?>
                 </div>
@@ -147,12 +209,16 @@ $totalDue = $netAmount;
                 <div>
                     <p class="label">Bill To</p>
                     <h3><?= h($clientName) ?></h3>
+
                     <?php if ($clientContact !== ''): ?><p><?= h($clientContact) ?></p><?php endif; ?>
                     <?php if (trim($clientAddress) !== ''): ?><p><?= h($clientAddress) ?></p><?php endif; ?>
+
                     <?php $clientLocation = address_line($clientCity, $clientCountry, $clientPostal); ?>
                     <?php if ($clientLocation !== ''): ?><p><?= h($clientLocation) ?></p><?php endif; ?>
+
                     <?php if ($clientEmail !== ''): ?><p><?= h($clientEmail) ?></p><?php endif; ?>
                 </div>
+
                 <div class="invoice-meta-card">
                     <div>
                         <span>Invoice Number</span>
@@ -195,10 +261,32 @@ $totalDue = $netAmount;
             </section>
 
             <section class="totals-section">
-                <div class="tax-note">
-                    <strong>Tax Note</strong>
-                    <p>This invoice shows the gross professional fee, 5% withholding tax, and net amount after withholding.</p>
+                <div class="payment-box">
+                    <p class="label">Payment Details</p>
+
+                    <?php if ($paymentBankName !== ''): ?>
+                        <p><strong>Bank / Wallet:</strong> <?= h($paymentBankName) ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($paymentAccountName !== ''): ?>
+                        <p><strong>Account Name:</strong> <?= h($paymentAccountName) ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($paymentAccountNumber !== ''): ?>
+                        <p><strong>Account Number:</strong> <?= h($paymentAccountNumber) ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($paymentNotes !== ''): ?>
+                        <p class="payment-note-text"><?= nl2br(h($paymentNotes)) ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($paymentQrData !== ''): ?>
+                        <div class="payment-qr-box">
+                            <img src="<?= h($paymentQrData) ?>" alt="Payment QR Code" class="payment-qr-image">
+                        </div>
+                    <?php endif; ?>
                 </div>
+
                 <div class="totals-card">
                     <div>
                         <span>Total Hours</span>
