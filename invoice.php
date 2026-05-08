@@ -262,7 +262,7 @@ $netAmount = $subtotal - $withholdingTax;
 
             <section class="totals-section">
                 <div class="payment-box">
-                    <p class="label">Payment Details</p>
+                    <p class="label">Payment / Notes</p>
 
                     <?php if ($paymentBankName !== ''): ?>
                         <p><strong>Bank / Wallet:</strong> <?= h($paymentBankName) ?></p>
@@ -280,6 +280,10 @@ $netAmount = $subtotal - $withholdingTax;
                         <p class="payment-note-text"><?= nl2br(h($paymentNotes)) ?></p>
                     <?php endif; ?>
 
+                    <?php if ($paymentBankName === '' && $paymentAccountName === '' && $paymentAccountNumber === '' && $paymentNotes === '' && $paymentQrData === ''): ?>
+                        <p class="payment-note-text">Payment details to be provided separately.</p>
+                    <?php endif; ?>
+
                     <?php if ($paymentQrData !== ''): ?>
                         <div class="payment-qr-box">
                             <img src="<?= h($paymentQrData) ?>" alt="Payment QR Code" class="payment-qr-image">
@@ -288,6 +292,7 @@ $netAmount = $subtotal - $withholdingTax;
                 </div>
 
                 <div class="totals-card">
+                    <p class="label summary-label">Summary</p>
                     <div>
                         <span>Total Hours</span>
                         <strong><?= number_format((float)$totalHours, 2) ?></strong>
