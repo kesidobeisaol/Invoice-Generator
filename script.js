@@ -88,6 +88,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return value ? `<p>${escapeHtml(value)}</p>` : '';
     }
 
+    function renderPaymentQr(value) {
+        if (!value) return '';
+
+        const trimmed = value.trim();
+        const isImageUrl = /^(https?:\/\/|data:image\/)/i.test(trimmed);
+
+        if (isImageUrl) {
+            return `
+                <div class="payment-qr-box">
+                    <p class="label">Payment QR</p>
+                    <img src="${escapeHtml(trimmed)}" alt="Payment QR code" class="payment-qr-image">
+                </div>
+            `;
+        }
+
+        return `
+            <div class="payment-qr-box">
+                <p class="label">Payment QR / Bank Details</p>
+                <p class="payment-qr-text">${escapeHtml(trimmed).replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+    }
+
     function getTasks() {
         const rows = tasksBody.querySelectorAll('.task-row');
 
@@ -144,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const invoiceDateValue = getValue(formData, 'invoice_date');
         const hourlyRate = Number(getValue(formData, 'hourly_rate') || 0);
         const currency = getValue(formData, 'currency') || 'PHP';
+        const paymentQr = getValue(formData, 'payment_qr');
         const tasks = getTasks();
 
         let totalHours = 0;
@@ -257,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </section>
 
             <footer class="invoice-footer">
+                ${renderPaymentQr(paymentQr)}
                 <p>Thank you for your business.</p>
             </footer>
         `;
